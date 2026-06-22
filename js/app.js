@@ -1,6 +1,64 @@
 // E-Waste Hardware Reclaimer - Main Application Logic
 // Orchestrates user interaction, state management, and view updates
 
+const ECO_DIY_RECIPES = [
+  {
+    name: "LED PWM Dimmer / Motor Controller",
+    description: "Build a high-efficiency controller to dim LED strips or regulate DC toy motor speeds without wasting heat.",
+    difficulty: "Easy",
+    required: [
+      { subcategory: "transistor", name: "MOSFET", qty: 1 },
+      { subcategory: "resistor", name: "Potentiometer", qty: 1 },
+      { subcategory: "resistor", name: "Resistor", qty: 1 }
+    ],
+    schematicTip: "Connect the potentiometer middle pin to the MOSFET gate through a current-limiting resistor to throttle current."
+  },
+  {
+    name: "DIY Active Audio Preamplifier",
+    description: "An active pre-amp circuit to boost signals from weak audio inputs or microphones before feeding to speakers.",
+    difficulty: "Moderate",
+    required: [
+      { subcategory: "ic", name: "Op-Amp", qty: 1 },
+      { subcategory: "capacitor", name: "Electrolytic Capacitor", qty: 2 },
+      { subcategory: "resistor", name: "Resistor", qty: 3 }
+    ],
+    schematicTip: "Use the electrolytic capacitors on the input and output lines to block DC voltage offset while passing AC audio signals."
+  },
+  {
+    name: "Electronic Morse Code Trainer",
+    description: "A simple code key oscillator for learning and practicing Morse code signals.",
+    difficulty: "Easy",
+    required: [
+      { subcategory: "audio", name: "Buzzer", qty: 1 },
+      { subcategory: "switch", name: "Tactile Switch", qty: 1 },
+      { subcategory: "power", name: "Coin Cell Holder", qty: 1 }
+    ],
+    schematicTip: "Wire the tactile switch in series between the coin cell holder positive contact and the buzzer positive pin."
+  },
+  {
+    name: "Solar Charging Supercapacitor Bank",
+    description: "Store green solar energy in high-capacity supercapacitors. Battery-free, eco-friendly energy reservoir.",
+    difficulty: "Hard",
+    required: [
+      { subcategory: "diode", name: "Schottky Diode", qty: 1 },
+      { subcategory: "capacitor", name: "Supercapacitor", qty: 1 },
+      { subcategory: "ic", name: "Linear Voltage Regulator", qty: 1 }
+    ],
+    schematicTip: "Install the Schottky diode in series with the solar panel output to prevent the supercapacitor from discharging back into the solar panel at night."
+  },
+  {
+    name: "Input Overvoltage & Protection Shield",
+    description: "A defensive power strip shield to protect delicate microcontroller boards from voltage spikes and surges.",
+    difficulty: "Moderate",
+    required: [
+      { subcategory: "resistor", name: "Varistor", qty: 1 },
+      { subcategory: "protection", name: "Fuse", qty: 1 },
+      { subcategory: "switch", name: "Toggle Switch", qty: 1 }
+    ],
+    schematicTip: "Connect the fuse in series on the active power line and mount the Metal Oxide Varistor (MOV) in parallel across the active and neutral inputs."
+  }
+];
+
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Analyzer
   const database = window.COMPONENT_DATABASE || [];
@@ -53,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements - Actions
   const btnReset = document.getElementById('btn-reset');
   const btnExport = document.getElementById('btn-export');
+  const recipesGrid = document.getElementById('recipes-grid');
 
   // --- TAB NAVIGATION ---
   tabButtons.forEach(btn => {
@@ -282,6 +341,97 @@ document.addEventListener('DOMContentLoaded', () => {
       btnReset.setAttribute('disabled', 'true');
       btnExport.setAttribute('disabled', 'true');
     }
+
+    // Live update Project Sandbox
+    updateRecipesSandbox();
+  };
+
+  // Live match inventory to Green DIY project recipes
+  const updateRecipesSandbox = () => {
+    recipesGrid.innerHTML = '';
+    
+    if (currentList.length === 0) {
+      recipesGrid.innerHTML = `
+        <div class="empty-col-msg" style="grid-column: 1 / -1; padding: 40px 20px;">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+          <p>Your Project Sandbox is empty. Add components to automatically match green DIY building recipes!</p>
+        </div>
+      `;
+      return;
+    }
+
+    ECO_DIY_RECIPES.forEach(recipe => {
+      let totalRequiredQty = 0;
+      let totalHavedQty = 0;
+      const partStatusList = [];
+
+      recipe.required.forEach(req => {
+        totalRequiredQty += req.qty;
+        
+        // Match parts in currentList by subcategory OR name
+        const matches = currentList.filter(item => {
+          const comp = item.component;
+          const subcatMatch = comp.subcategory.toLowerCase() === req.subcategory.toLowerCase();
+          const nameMatch = comp.name.toLowerCase().includes(req.name.toLowerCase());
+          // Only reuse safe parts (do not use hazardous parts)
+          return (subcatMatch || nameMatch) && comp.classification !== 'hazardous';
+        });
+
+        const totalHavedForReq = matches.reduce((sum, item) => sum + item.quantity, 0);
+        totalHavedQty += Math.min(totalHavedForReq, req.qty);
+
+        partStatusList.push({
+          ...req,
+          have: totalHavedForReq,
+          satisfied: totalHavedForReq >= req.qty
+        });
+      });
+
+      const matchPercent = Math.round((totalHavedQty / totalRequiredQty) * 100);
+      const isUnlocked = matchPercent === 100;
+
+      const card = document.createElement('div');
+      card.className = `recipe-card ${isUnlocked ? 'recipe-unlocked' : ''}`;
+      
+      const progressFillWidth = `${matchPercent}%`;
+      const tipBox = isUnlocked 
+        ? `<div class="recipe-tip-box">💡 <strong>Build Tip:</strong> ${Utils.escapeHtml(recipe.schematicTip)}</div>`
+        : `<div class="recipe-tip-box" style="background:none; border:none; color:var(--text-muted); padding:0;">Collect all parts to unlock schematics tips.</div>`;
+
+      const partsHtml = partStatusList.map(p => {
+        const itemClass = p.satisfied ? 'part-have' : 'part-missing';
+        return `
+          <li class="recipe-part-item ${itemClass}">
+            <span class="recipe-part-dot"></span>
+            <span>${p.qty}x ${p.name} (Have: ${p.have}/${p.qty})</span>
+          </li>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div>
+          <div class="recipe-title">${Utils.escapeHtml(recipe.name)}</div>
+          <div class="recipe-desc">${Utils.escapeHtml(recipe.description)}</div>
+          
+          <div class="recipe-progress-container">
+            <div class="recipe-progress-text">
+              <span>Match Status</span>
+              <span>${matchPercent}%</span>
+            </div>
+            <div class="recipe-progress-bar">
+              <div class="recipe-progress-fill" style="width: ${progressFillWidth}"></div>
+            </div>
+          </div>
+          
+          <ul class="recipe-parts-list">
+            ${partsHtml}
+          </ul>
+        </div>
+        ${tipBox}
+      `;
+
+      recipesGrid.appendChild(card);
+    });
   };
 
   // Render a specific category column
