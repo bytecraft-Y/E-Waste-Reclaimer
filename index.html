@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="E-Waste Hardware Reclaimer - Electronics Salvage Assistant. Intelligently scan and categorize circuit board components to identify salvageable items, standard recyclables, and toxic hazards.">
+  <title>E-Waste Hardware Reclaimer - Electronics Salvage Assistant</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header Section -->
+    <header>
+      <div class="brand-section">
+        <div class="logo-icon" id="app-logo">
+          <!-- Custom PCB chip vector logo -->
+          <svg viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 6h-2V7h2v2zm-4 0h-2V7h2v2zm-4 0H7V7h2v2zm0 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm0 4h-2v-2h2v2zm-4 0h-2v-2h2v2zm-4 0H7v-2h2v2z"/>
+          </svg>
+        </div>
+        <div class="title-area">
+          <h1>E-Waste Hardware Reclaimer</h1>
+          <p>Electronics Salvage & Reclaim Assistant — Track: Agents for Good</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Input Section & Info Tips -->
+    <div class="action-grid">
+      <!-- Input Panel -->
+      <section class="glass-panel" aria-label="Component Input Controls">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <h2>Add Components to Analyze</h2>
+        </div>
+        
+        <div class="input-tabs">
+          <button class="tab-btn active" data-tab="single" id="tab-single">Single Component</button>
+          <button class="tab-btn" data-tab="bom" id="tab-bom">Paste BOM List</button>
+        </div>
+
+        <!-- Single Component Search -->
+        <div class="input-pane active" id="pane-single">
+          <div class="search-wrapper">
+            <svg class="search-icon-svg" viewBox="0 0 24 24">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input type="text" id="search-input" class="search-input" placeholder="Type component name (e.g. electrolytic capacitor, 555 timer, mosfet...)" autocomplete="off">
+            <div id="suggestions-dropdown" class="suggestions-dropdown"></div>
+          </div>
+          
+          <div class="row-inline">
+            <div style="flex-grow: 1;">
+              <label for="single-qty" style="display:none">Quantity</label>
+              <input type="number" id="single-qty" class="search-input" value="1" min="1" placeholder="Qty" style="padding-left: 16px;">
+            </div>
+            <button class="btn-primary" id="add-single-btn" style="flex-grow: 3;">
+              <svg viewBox="0 0 24 24" style="fill:#fff; width:18px; height:18px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              Add Component
+            </button>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <p class="quick-grid-desc">Popular Board Components Quick-Pick:</p>
+            <div class="quick-pick-container" id="quick-pick-container"></div>
+          </div>
+        </div>
+
+        <!-- BOM List Parsing -->
+        <div class="input-pane" id="pane-bom">
+          <label for="bom-textarea" style="display:none">BOM List Text</label>
+          <textarea id="bom-textarea" class="bom-textarea" placeholder="Paste your parts list here. Examples:&#10;10x electrolytic capacitor&#10;3x mosfet&#10;1x mercury switch&#10;5 capacitor&#10;1 bulging capacitor (shows hazard triggers!)"></textarea>
+          
+          <div class="row-inline">
+            <button class="btn-secondary" id="load-sample-btn">Load Sample Board</button>
+            <button class="btn-primary" id="analyze-bom-btn" style="flex-grow: 1;">
+              <svg viewBox="0 0 24 24" style="fill:#fff; width:18px; height:18px;"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              Analyze List
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Safety Guidelines / General Tips panel -->
+      <section class="glass-panel tips-panel" aria-label="Salvage Tips and Safety">
+        <div>
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <h3>Quick Salvage Guidelines</h3>
+          </div>
+          
+          <div class="safety-alert-box">
+            <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+            <div>
+              <h4>Safety Notice</h4>
+              <p>Old PCBs can contain toxic lead solder, flame retardants, or chemicals. Always work in a ventilated area, wash hands, and never desolder bloated cells or mercury bulbs.</p>
+            </div>
+          </div>
+
+          <div class="tip-card">
+            <strong>Desoldering Pro Tip:</strong>
+            <p style="font-size: 12px; color: var(--text-muted);">For through-hole parts (resistors, DIP chips), use a solder vacuum pump or copper solder wick. For small SMD components, a hot air rework nozzle makes salvage quick and prevents pads from tearing.</p>
+          </div>
+        </div>
+
+        <div class="footer-buttons">
+          <button class="btn-secondary" id="btn-reset" disabled>Clear All</button>
+          <button class="btn-primary" id="btn-export" disabled>Export Report</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Stats Dashboard Section -->
+    <section class="stats-container" aria-label="Salvage Statistics">
+      <div class="stat-item stat-cyan">
+        <div class="stat-num" id="stat-total-items">0</div>
+        <div class="stat-lbl">Parts Analyzed</div>
+      </div>
+      <div class="stat-item stat-blue">
+        <div class="stat-num" id="stat-diverted-weight">0 g</div>
+        <div class="stat-lbl">Waste Diverted</div>
+      </div>
+      <div class="stat-item stat-green">
+        <div class="stat-num" id="stat-total-value">$0.00</div>
+        <div class="stat-lbl">Reclaim Value</div>
+      </div>
+      <div class="stat-item stat-red">
+        <div class="stat-num" id="stat-hazard-count">0</div>
+        <div class="stat-lbl">Hazards Flagged</div>
+      </div>
+    </section>
+
+    <!-- Results Columns Grid -->
+    <main class="results-grid">
+      <!-- 🟢 Salvageable Column -->
+      <section aria-labelledby="col-salvageable-title">
+        <div class="column-header salvageable-hdr">
+          <span id="col-salvageable-title">🟢 Salvageable (Re-use)</span>
+          <span class="column-badge" id="badge-salvageable">0</span>
+        </div>
+        <div class="card-list" id="list-salvageable">
+          <div class="empty-col-msg">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <p>No salvageable parts listed. Extract premium microchips, relays, and coils.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🔵 Recyclable Column -->
+      <section aria-labelledby="col-recyclable-title">
+        <div class="column-header recyclable-hdr">
+          <span id="col-recyclable-title">🔵 Recyclable (Standard)</span>
+          <span class="column-badge" id="badge-recyclable">0</span>
+        </div>
+        <div class="card-list" id="list-recyclable">
+          <div class="empty-col-msg">
+            <svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>
+            <p>No standard recyclables. Diodes, ceramic caps, and pins go here.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🔴 Hazardous Column -->
+      <section aria-labelledby="col-hazardous-title">
+        <div class="column-header hazardous-hdr">
+          <span id="col-hazardous-title">🔴 Hazardous (Caution)</span>
+          <span class="column-badge" id="badge-hazardous">0</span>
+        </div>
+        <div class="card-list" id="list-hazardous">
+          <div class="empty-col-msg">
+            <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+            <p>No hazardous items flagged. Battery cells and mercury switches appear here.</p>
+          </div>
+        </div>
+    </main>
+
+    <!-- Green DIY Project Sandbox -->
+    <section class="glass-panel" style="margin-top: 32px;" id="sandbox-section">
+      <div class="panel-title" style="margin-bottom: 8px;">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+        <h3>🛠️ Green DIY Project Sandbox</h3>
+      </div>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">
+        Collect salvageable parts to unlock circuit designs. The sandbox live-matches your inventory to find creative green hardware recipes.
+      </p>
+      <div class="recipes-grid" id="recipes-grid">
+        <!-- populated dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2026 E-Waste Hardware Reclaimer. Built to support green engineering & sustainable salvage. <a href="https://github.com/bytecraft-Y/github-basics" target="_blank" rel="noopener">Project Repository</a></p>
+    </footer>
+  </div>
+
+  <!-- Detail Slide Drawer Modal -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="overlay-drawer" id="overlay-drawer" aria-label="Component Details">
+    <div class="drawer-header">
+      <h3 class="drawer-title" id="drawer-title">Component Analysis</h3>
+      <button class="drawer-close" id="drawer-close" aria-label="Close details">&times;</button>
+    </div>
+    <div class="drawer-content" id="drawer-content">
+      <!-- Generated dynamically by app.js -->
+    </div>
+  </aside>
+
+  <!-- Script Imports -->
+  <script src="js/database.js"></script>
+  <script src="js/analyzer.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
